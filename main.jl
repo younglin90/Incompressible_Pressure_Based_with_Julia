@@ -277,8 +277,6 @@ end
 
 
 
-
-
 # calculation main
 main()
 
