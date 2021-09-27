@@ -97,7 +97,7 @@ function volumefraction!(
         =#
         Uₙ -= invρΔt * (pᵣ-pₗ) / ΔLR
 
-        wₗ = sign(Uₙ)
+        wₗ = 0.5 * (1.0 + sign(Uₙ))
         wᵣ = 1.0 - wₗ
         
         uₙ = wₗ * uₗ + wᵣ * uᵣ
@@ -163,10 +163,17 @@ function volumefraction!(
     ps = MKLPardisoSolver()
     Δα₁ = solve(ps, A, B)
     
+
+
+
+    relax = 0.9
+
+
+
     diagon = 1
     for cell in cells
 
-        cell.var[👉.α₁] += 0.7*Δα₁[diagon]
+        cell.var[👉.α₁] += relax*Δα₁[diagon]
 
         diagon += 1
     end

@@ -111,7 +111,7 @@ function momentum!(
         =#
         Uₙ -= invρΔt * (pᵣ-pₗ) / ΔLR
 
-        wₗ = sign(Uₙ)
+        wₗ = 0.5 * (1.0 + sign(Uₙ))
         wᵣ = 1.0 - wₗ
 
         ρₙ = wₗ * ρₗ + wᵣ * ρᵣ
@@ -122,19 +122,19 @@ function momentum!(
         push!(A_rows, face.owner)
         push!(A_cols, face.neighbour)
 
-        tmp_AL_var = wᵣ * ρᵣ * Uₙ * ΔS
+        #tmp_AL_var = wᵣ * ρᵣ * Uₙ * ΔS
         #tmp_AL_var -= μₙ / ΔLR * ΔS
-        push!(A_vals, tmp_AL_var)
+        push!(A_vals, wᵣ * ρᵣ * Uₙ * ΔS)
         
         push!(A_rows, face.neighbour)
         push!(A_cols, face.owner)
 
-        tmp_AR_var = -wₗ * ρₗ * Uₙ * ΔS 
+        #tmp_AR_var = -wₗ * ρₗ * Uₙ * ΔS 
         #tmp_AR_var -= μₙ / ΔLR * ΔS
-        push!(A_vals, tmp_AR_var)
+        push!(A_vals, wₗ * ρₗ * (-Uₙ) * ΔS )
 
         A_vals[face.owner] += wₗ * ρₗ * Uₙ * ΔS 
-        A_vals[face.neighbour] -= wᵣ * ρᵣ * Uₙ * ΔS 
+        A_vals[face.neighbour] += wᵣ * ρᵣ * (-Uₙ) * ΔS 
 
         # convective terms
         #B[face.owner, 1] -= ρₗ * uₙ * Uₙ * ΔS
@@ -227,17 +227,31 @@ function momentum!(
 #    Δv = gmres!(x, A, By, Pl = P, log=true, maxiter = 1000)
     #println(maximum(Δu))
     
+
+
+
+    relax = 0.9
+
+
+
+
     diagon = 1
+    maximum_U = -1.e12
     for cell in cells
 
-        cell.var[👉.u] += 0.7*ΔU[diagon, 1]
-        cell.var[👉.v] += 0.7*ΔU[diagon, 2]
+        cell.var[👉.u] += relax*ΔU[diagon, 1]
+        cell.var[👉.v] += relax*ΔU[diagon, 2]
+        
+        maximum_U = max(maximum_U,abs(cell.var[👉.u]))
+        maximum_U = max(maximum_U,abs(cell.var[👉.v]))
+        maximum_U = max(maximum_U,abs(cell.var[👉.w]))
 
         diagon += 1
     end
 
 
-    return log10(norm(ΔU))
+    #return log10(norm(ΔU))
+    return log10(norm(ΔU)/(maximum_U+1.e-20))
    
 
 end

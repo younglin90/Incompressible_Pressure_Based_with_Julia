@@ -97,7 +97,7 @@ function pressure!(
         Uₙ -= invρΔt * (pᵣ-pₗ) / ΔLR
 
 
-        wₗ = sign(Uₙ)
+        wₗ = 0.5 * (1.0 + sign(Uₙ))
         wᵣ = 1.0 - wₗ
         
         uₙ = wₗ * uₗ + wᵣ * uᵣ
@@ -170,11 +170,18 @@ function pressure!(
 #    Δu = gmres!(x, A, Bx, Pl = P, log=true, maxiter = 1000)
 #    Δv = gmres!(x, A, By, Pl = P, log=true, maxiter = 1000)
     #println(maximum(Δu))
+
+
+
+
+    relax = 0.9
+
+
     
     diagon = 1
     for cell in cells
 
-        cell.var[👉.p] += 0.7*Δp[diagon]
+        cell.var[👉.p] += relax*Δp[diagon]
 
         diagon += 1
     end
@@ -203,8 +210,8 @@ function pressure!(
     for cell in cells
 
         invρΔt = 👉.Δt / cell.var[👉.ρ]
-        cell.var[👉.u] -= 0.7 * invρΔt * ∂Δp∂x[diagon, 1]
-        cell.var[👉.v] -= 0.7 * invρΔt * ∂Δp∂x[diagon, 2]
+        cell.var[👉.u] -= relax * invρΔt * ∂Δp∂x[diagon, 1]
+        cell.var[👉.v] -= relax * invρΔt * ∂Δp∂x[diagon, 2]
         #cell.var[👉.w] -= 0.3 * invρΔt * ∂Δp∂x[diagon, 3]
 
         diagon += 1
