@@ -109,18 +109,18 @@ function pressure!(
 
 
 
-        tmp_A_var = -invρΔt / ΔLR * ΔS
+        diff_p = invρΔt / ΔLR * ΔS
 
         push!(A_rows, face.owner)
         push!(A_cols, face.neighbour)
-        push!(A_vals, tmp_A_var)
+        A_vals[face.owner] += (diff_p)
+        push!(A_vals, (-diff_p))
         
         push!(A_rows, face.neighbour)
         push!(A_cols, face.owner)
-        push!(A_vals, tmp_A_var)
+        A_vals[face.neighbour] -= (-diff_p)
+        push!(A_vals, -(diff_p))
 
-        A_vals[face.owner] -= tmp_A_var
-        A_vals[face.neighbour] -= tmp_A_var
 
         # convective terms
         B[face.owner] -= Uₙ * ΔS

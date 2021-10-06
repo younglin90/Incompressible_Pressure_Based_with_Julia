@@ -121,20 +121,14 @@ function momentum!(
 
         push!(A_rows, face.owner)
         push!(A_cols, face.neighbour)
-
-        #tmp_AL_var = wᵣ * ρᵣ * Uₙ * ΔS
-        #tmp_AL_var -= μₙ / ΔLR * ΔS
+        A_vals[face.owner] += wₗ * ρₗ * Uₙ * ΔS 
         push!(A_vals, wᵣ * ρᵣ * Uₙ * ΔS)
         
         push!(A_rows, face.neighbour)
         push!(A_cols, face.owner)
-
-        #tmp_AR_var = -wₗ * ρₗ * Uₙ * ΔS 
-        #tmp_AR_var -= μₙ / ΔLR * ΔS
+        A_vals[face.neighbour] += wᵣ * ρᵣ * (-Uₙ) * ΔS 
         push!(A_vals, wₗ * ρₗ * (-Uₙ) * ΔS )
 
-        A_vals[face.owner] += wₗ * ρₗ * Uₙ * ΔS 
-        A_vals[face.neighbour] += wᵣ * ρᵣ * (-Uₙ) * ΔS 
 
         # convective terms
         #B[face.owner, 1] -= ρₗ * uₙ * Uₙ * ΔS

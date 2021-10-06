@@ -6,6 +6,7 @@ include("./transport.jl")
 include("./momentum.jl")
 include("./pressure.jl")
 include("./volumefraction.jl")
+include("./coupled.jl")
 
 
 using Plots
@@ -35,6 +36,8 @@ function plotting(
     VAR2 = zeros(Float64, Nx, Ny)
     VAR3 = zeros(Float64, Nx, Ny)
     VAR4 = zeros(Float64, Nx, Ny)
+    VAR5 = zeros(Float64, Nx, Ny)
+    VAR6 = zeros(Float64, Nx, Ny)
     for i in 1:Nx
         for j in 1:Ny
             k=1
@@ -45,6 +48,8 @@ function plotting(
             VAR2[i,j] = cells[ijk].var[👉.α₁]
             VAR3[i,j] = cells[ijk].var[👉.u]
             VAR4[i,j] = cells[ijk].var[👉.v]
+            VAR5[i,j] = cells[ijk].var[👉.w]
+            VAR6[i,j] = cells[ijk].var[👉.T]
 
         end
     end
@@ -59,8 +64,10 @@ function plotting(
         heatmap(X, Y, VAR1', c = :bluesreds),
         heatmap(X, Y, VAR2', c = :bluesreds),
         heatmap(X, Y, VAR3', c = :bluesreds),
-        heatmap(X, Y, VAR4', c = :bluesreds);
-        layout = 4
+        heatmap(X, Y, VAR4', c = :bluesreds),
+        heatmap(X, Y, VAR5', c = :bluesreds),
+        heatmap(X, Y, VAR6', c = :bluesreds);
+        layout = grid(3, 2)
     )
 
     gui()
@@ -126,9 +133,8 @@ function main()
 
 
     # initialization
-    p∞ = 101325.0
     for cell in cells
-        cell.var[👉.p] = 101325.0 - p∞
+        cell.var[👉.p] = 101325.0
         cell.var[👉.u] = 0.0
         cell.var[👉.v] = 0.0
         cell.var[👉.w] = 0.0
@@ -190,6 +196,70 @@ function main()
         while(
             👉.pseudoIter ≤ 👉.pseudoMaxIter
         )
+        
+            for i in 1:0
+
+                resi1 =
+                volumefraction!(
+                    👉,
+                    cells,
+                    faces,
+                    faces_internal,
+                    faces_boundary,
+                    faces_boundary_top,
+                    faces_boundary_bottom,
+                    faces_boundary_left,
+                    faces_boundary_right
+                )
+        
+                println(👉.realIter,", ",👉.pseudoIter,", volumefraction equation success, ",resi1)
+                
+                # EOS
+                # Transport
+                for cell in cells
+                    cell.var[👉.α₁] = max(min(cell.var[👉.α₁],1.0),0.0)
+                    cell.var[👉.α₂] = 1.0 - cell.var[👉.α₁]
+                    cell.var[👉.ρ] = cell.var[👉.α₁] * 1000.0 + cell.var[👉.α₂] * 1.0
+                    cell.var[👉.μ] = cell.var[👉.α₁] * 0.001 + cell.var[👉.α₂] * 1.e-5
+                end
+
+        
+            end
+
+
+
+            for i in 1:1
+
+                resi1 =
+                coupled!(
+                    👉,
+                    cells,
+                    faces,
+                    faces_internal,
+                    faces_boundary,
+                    faces_boundary_top,
+                    faces_boundary_bottom,
+                    faces_boundary_left,
+                    faces_boundary_right
+                )
+        
+                println(👉.realIter,", ",👉.pseudoIter,", coupled equation success, ",resi1)
+                
+                # EOS
+                # Transport
+                for cell in cells
+                    cell.var[👉.α₁] = max(min(cell.var[👉.α₁],1.0),0.0)
+                    cell.var[👉.α₂] = 1.0 - cell.var[👉.α₁]
+                    cell.var[👉.ρ] = cell.var[👉.α₁] * 1000.0 + cell.var[👉.α₂] * 1.0
+                    cell.var[👉.μ] = cell.var[👉.α₁] * 0.001 + cell.var[👉.α₂] * 1.e-5
+                end
+
+        
+            end
+
+
+
+#=
             for i in 1:1
                 resi1 =
                 momentum!(
@@ -255,6 +325,8 @@ function main()
 
         
             end
+
+=#
 
 
             👉.pseudoIter += 1
